@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>理财监控中心</title>
+  <!-- Tailwind CSS v3 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome -->
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+  <!-- 统一的 Tailwind 配置 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#1e40af',
+            secondary: '#3b82f6',
+            success: '#10b981',
+            danger: '#ef4444',
+            warning: '#f59e0b',
+            info: '#3b82f6',
+            light: '#f3f4f6',
+            dark: '#1f2937',
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          animation: {
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          }
+        }
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .glass {
+        background: rgba(255, 255, 255, 0.25);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+      }
+      .text-shadow {
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      .card-shadow {
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+      }
+      .gradient-bg {
+        background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+      }
+      .gradient-text {
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+        background-image: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 font-sans">
+  <!-- 顶部导航栏 -->
+  <nav class="bg-white shadow-md sticky top-0 z-50">
+    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+      <div class="flex items-center space-x-2">
+        <i class="fa fa-line-chart text-primary text-2xl"></i>
+        <h1 class="text-xl font-bold text-primary">理财监控中心</h1>
+      </div>
+      <div class="flex items-center space-x-4">
+        <button id="refreshBtn" class="flex items-center space-x-1 px-3 py-1.5 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all">
+          <i class="fa fa-refresh"></i>
+          <span>刷新数据</span>
+        </button>
+        <button id="settingsBtn" class="p-2 text-gray-600 hover:text-primary transition-all">
+          <i class="fa fa-cog text-xl"></i>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- 主内容区 -->
+  <main class="container mx-auto px-4 py-6">
+    <!-- 资产总览卡片 -->
+    <section class="mb-8">
+      <div class="bg-white rounded-xl p-6 card-shadow relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -mr-32 -mt-32 z-0"></div>
+        <div class="relative z-10">
+          <h2 class="text-lg font-semibold text-gray-700 mb-4">资产总览</h2>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- 总资产 -->
+            <div class="bg-blue-50 rounded-lg p-4">
+              <p class="text-sm text-gray-500 mb-1">总资产 (元)</p>
+              <p class="text-2xl font-bold text-primary" id="totalAssets">0.00</p>
+              <div class="flex items-center mt-2 text-sm">
+                <span class="text-gray-500">较昨日</span>
+                <span class="ml-2 flex items-center text-success" id="assetsChange">
+                  <i class="fa fa-arrow-up mr-1"></i>
+                  <span>0.00</span>
+                </span>
+              </div>
+            </div>
+            
+            <!-- 总收益 -->
+            <div class="bg-green-50 rounded-lg p-4">
+              <p class="text-sm text-gray-500 mb-1">总收益 (元)</p>
+              <p class="text-2xl font-bold text-success" id="totalProfit">0.00</p>
+              <div class="flex items-center mt-2 text-sm">
+                <span class="text-gray-500">收益率</span>
+                <span class="ml-2 text-success" id="profitRate">0.00%</span>
+              </div>
+            </div>
+            
+            <!-- 今日收益 -->
+            <div class="bg-purple-50 rounded-lg p-4">
+              <p class="text-sm text-gray-500 mb-1">今日收益 (元)</p>
+              <p class="text-2xl font-bold text-info" id="todayProfit">0.00</p>
+              <div class="flex items-center mt-2 text-sm">
+                <span class="text-gray-500">较昨日</span>
+                <span class="ml-2 flex items-center text-success" id="todayChange">
+                  <i class="fa fa-arrow-up mr-1"></i>
+                  <span>0.00</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 收益统计卡片 -->
+    <section class="mb-8">
+      <div class="bg-white rounded-xl p-6 card-shadow">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-lg font-semibold text-gray-700">收益统计</h2>
+          <div class="flex space-x-2">
+            <button class="profit-period-btn px-3 py-1.5 rounded-lg bg-primary text-white" data-period="week">本周</button>
+            <button class="profit-period-btn px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600" data-period="month">本月</button>
+            <button class="profit-period-btn px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600" data-period="year">本年</button>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <!-- 支付宝收益 -->
+          <div class="border border-gray-100 rounded-lg p-4 hover:border-primary/30 hover:shadow-md transition-all">
+            <div class="flex items-center mb-3">
+              <img src="https://p26-doubao-search-sign.byteimg.com/labis/131bb88b6ff9884b379617348f57c4f7~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1788084314&x-signature=R8aK0Ij12gtQ3wuP92VySKMQs%2BQ%3D" alt="支付宝" class="w-6 h-6 mr-2">
+              <h3 class="font-medium text-gray-700">支付宝收益</h3>
+            </div>
+            <p class="text-2xl font-bold text-success" id="alipayProfit">0.00</p>
+            <p class="text-sm text-gray-500 mt-1">占总收益的 <span id="alipayProfitRatio">0%</span></p>
+          </div>
+          
+          <!-- 银行收益 -->
+          <div class="border border-gray-100 rounded-lg p-4 hover:border-primary/30 hover:shadow-md transition-all">
+            <div class="flex items-center mb-3">
+              <img src="https://p3-doubao-search-sign.byteimg.com/labis/e65e9326441b6c0ad1a7f9bf2b4affb6~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1788084314&x-signature=%2FKtrodeM7ObL1wg%2Fp9YbIFitOwU%3D" alt="银行" class="w-6 h-6 mr-2">
+              <h3 class="font-medium text-gray-700">银行收益</h3>
+            </div>
+            <p class="text-2xl font-bold text-success" id="bankProfit">0.00</p>
+            <p class="text-sm text-gray-500 mt-1">占总收益的 <span id="bankProfitRatio">0%</span></p>
+          </div>
+          
+          <!-- 收益对比 -->
+          <div class="border border-gray-100 rounded-lg p-4 hover:border-primary/30 hover:shadow-md transition-all">
+            <div class="flex items-center mb-3">
+              <i class="fa fa-bar-chart text-primary mr-2"></i>
+              <h3 class="font-medium text-gray-700">收益对比</h3>
+            </div>
+            <div class="flex items-center">
+              <div class="w-full bg-gray-100 rounded-full h-2.5">
+                <div class="bg-primary h-2.5 rounded-full" id="alipayProfitBar" style="width: 0%"></div>
+              </div>
+              <span class="ml-2 text-sm text-gray-600">支付宝</span>
+            </div>
+            <div class="flex items-center mt-2">
+              <div class="w-full bg-gray-100 rounded-full h-2.5">
+                <div class="bg-success h-2.5 rounded-full" id="bankProfitBar" style="width: 0%"></div>
+              </div>
+              <span class="ml-2 text-sm text-gray-600">银行</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 产品列表 -->
+    <section class="mb-8">
+      <div class="bg-white rounded-xl p-6 card-shadow">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-lg font-semibold text-gray-700">产品列表</h2>
+          <div class="flex space-x-2">
+            <button class="platform-tab-btn px-4 py-2 rounded-lg bg-primary text-white" data-platform="all">全部</button>
+            <button class="platform-tab-btn px-4 py-2 rounded-lg bg-gray-100 text-gray-600" data-platform="alipay">支付宝</button>
+            <button class="platform-tab-btn px-4 py-2 rounded-lg bg-gray-100 text-gray-600" data-platform="bank">银行</button>
+          </div>
+        </div>
+        
+        <!-- 搜索和筛选 -->
+        <div class="flex flex-col md:flex-row gap-4 mb-6">
+          <div class="relative flex-grow">
+            <i class="fa fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            <input type="text" id="productSearch" placeholder="搜索产品名称..." class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+          </div>
+          <div class="flex space-x-2">
+            <select id="productSort" class="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+              <option value="default">默认排序</option>
+              <option value="profit-desc">收益从高到低</option>
+              <option value="profit-asc">收益从低到高</option>
+              <option value="amount-desc">金额从高到低</option>
+              <option value="amount-asc">金额从低到高</option>
+            </select>
+          </div>
+        </div>
+        
+        <!-- 产品卡片列表 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="productList">
+          <!-- 产品卡片将通过JavaScript动态生成 -->
+          <div class="animate-pulse col-span-1 md:col-span-2 lg:col-span-3 flex justify-center items-center py-12">
+            <p class="text-gray-500">正在加载产品数据...</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 收益趋势图表 -->
+    <section class="mb-8">
+      <div class="bg-white rounded-xl p-6 card-shadow">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-lg font-semibold text-gray-700">收益趋势</h2>
+          <div class="flex space-x-2">
+            <button class="chart-period-btn px-3 py-1.5 rounded-lg bg-primary text-white" data-period="day">日</button>
+            <button class="chart-period-btn px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600" data-period="week">周</button>
+            <button class="chart-period-btn px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600" data-period="month">月</button>
+          </div>
+        </div>
+        <div class="h-80">
+          <canvas id="profitChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- 收益提醒设置 -->
+    <section class="mb-8">
+      <div class="bg-white rounded-xl p-6 card-shadow">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-lg font-semibold text-gray-700">收益提醒</h2>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="profitAlertToggle" class="sr-only peer">
+            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+            <span class="ml-3 text-sm font-medium text-gray-700">开启提醒</span>
+          </label>
+        </div>
+        <div id="alertSettings" class="grid grid-cols-1 md:grid-cols-2 gap-6 opacity-50 pointer-events-none transition-all">
+          <div class="border border-gray-200 rounded-lg p-4">
+            <h3 class="font-medium text-gray-700 mb-3">日收益提醒阈值</h3>
+            <div class="flex items-center">
+              <input type="number" id="dailyAlertThreshold" min="0" step="0.01" value="100" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+              <span class="ml-2 text-gray-500">元</span>
+            </div>
+            <p class="text-sm text-gray-500 mt-2">当日收益超过此值时将收到提醒</p>
+          </div>
+          <div class="border border-gray-200 rounded-lg p-4">
+            <h3 class="font-medium text-gray-700 mb-3">周收益提醒阈值</h3>
+            <div class="flex items-center">
+              <input type="number" id="weeklyAlertThreshold" min="0" step="0.01" value="500" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+              <span class="ml-2 text-gray-500">元</span>
+            </div>
+            <p class="text-sm text-gray-500 mt-2">当周收益超过此值时将收到提醒</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 底部信息 -->
+  <footer class="bg-gray-800 text-white py-6">
+    <div class="container mx-auto px-4">
+      <div class="flex flex-col md:flex-row justify-between items-center">
+        <div class="mb-4 md:mb-0">
+          <p class="text-sm">© 2026 理财监控中心. 版权所有</p>
+        </div>
+        <div class="flex space-x-4">
+          <a href="#" class="text-gray-300 hover:text-white transition-colors">
+            <i class="fa fa-question-circle"></i>
+            <span class="ml-1">帮助中心</span>
+          </a>
+          <a href="#" class="text-gray-300 hover:text-white transition-colors">
+            <i class="fa fa-envelope"></i>
+            <span class="ml-1">联系我们</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- 通知弹窗 -->
+  <div id="notification" class="fixed top-4 right-4 bg-white rounded-lg shadow-lg p-4 max-w-sm transform translate-x-full transition-transform duration-300 z-50 flex items-start space-x-3">
+    <div class="bg-success/10 p-2 rounded-full">
+      <i class="fa fa-bell text-success"></i>
+    </div>
+    <div class="flex-1">
+      <h4 class="font-medium text-gray-800" id="notificationTitle">收益提醒</h4>
+      <p class="text-sm text-gray-600 mt-1" id="notificationMessage">您的今日收益已超过设定阈值</p>
+      <div class="flex justify-end mt-2">
+        <button id="closeNotification" class="text-sm text-gray-500 hover:text-gray-700">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 产品详情弹窗 -->
+  <div id="productDetailModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div class="p-6 border-b border-gray-100">
+        <div class="flex justify-between items-center">
+          <h3 class="text-xl font-bold text-gray-800" id="modalProductName">产品详情</h3>
+          <button id="closeProductModal" class="text-gray-500 hover:text-gray-700">
+            <i class="fa fa-times text-xl"></i>
+          </button>
+        </div>
+      </div>
+      <div class="p-6" id="modalProductContent">
+        <!-- 产品详情内容将通过JavaScript动态生成 -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 模拟数据
+    const mockData = {
+      products: [
+        {
+          id: 'p001',
+          name: '余额宝',
+          platform: 'alipay',
+          type: 'money_fund',
+          amount: 50000,
+          currentValue: 50625,
+          dailyProfit: 8.25,
+          totalProfit: 625,
+          profitRate: 2.5,
+          purchaseDate: '2025-12-01',
+          description: '支付宝推出的货币基金产品，灵活存取，收益稳定'
+        },
+        {
+          id: 'p002',
+          name: '理财通稳健理财',
+          platform: 'alipay',
+          type: 'fixed_income',
+          amount: 30000,
+          currentValue: 30840,
+          dailyProfit: 7.50,
+          totalProfit: 840,
+          profitRate: 3.5,
+          purchaseDate: '2025-11-15',
+          maturityDate: '2026-02-15',
+          description: '中低风险固定收益类产品，期限3个月'
+        },
+        {
+          id: 'p003',
+          name: '中证500指数基金',
+          platform: 'alipay',
+          type: 'stock_fund',
+          amount: 20000,
+          currentValue: 21200,
+          dailyProfit: 12.80,
+          totalProfit: 1200,
+          profitRate: 6.0,
+          purchaseDate: '2025-10-01',
+          description: '跟踪中证500指数的股票型基金，较高风险较高收益'
+        },
+        {
+          id: 'p004',
+          name: '工商银行稳健增利',
+          platform: 'bank',
+          type: 'fixed_income',
+          amount: 100000,
+          currentValue: 102800,
+          dailyProfit: 15.40,
+          totalProfit: 2800,
+          profitRate: 3.36,
+          purchaseDate: '2025-09-01',
+          maturityDate: '2026-03-01',
+          description: '工商银行推出的固定收益类理财产品，期限6个月'
+        },
+        {
+          id: 'p005',
+          name: '建设银行乾元-私享',
+          platform: 'bank',
+          type: 'wealth_management',
+          amount: 80000,
+          currentValue: 81840,
+          dailyProfit: 12.30,
+          totalProfit: 1840,
+          profitRate: 2.85,
+          purchaseDate: '2025-10-15',
+          maturityDate: '2026-01-15',
+          description: '建设银行高端客户专享理财产品，中低风险'
+        },
+        {
+          id: 'p006',
+          name: '招商银行朝朝宝',
+          platform: 'bank',
+          type: 'money_fund',
+          amount: 15000,
+          currentValue: 15090,
+          dailyProfit: 2.45,
+          totalProfit: 90,
+          profitRate: 2.16,
+          purchaseDate: '2025-12-15',
+          description: '招商银行推出的类似余额宝的现金管理产品'
+        }
+      ],
+      profitHistory: []
+    };
+
+    // 生成30天的收益历史数据
+    function generateProfitHistory() {
+      const history = [];
+      const today = new Date();
+      
+      for (let i = 29; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        
+        // 基础收益，随时间缓慢增长
+        const baseDailyProfit = 30 + Math.random() * 10 + (i / 5);
+        
+        // 平台收益分配
+        const alipayRatio = 0.4 + Math.random() * 0.2; // 40%-60%
+        const bankRatio = 1 - alipayRatio;
+        
+        const dailyProfit = baseDailyProfit + Math.random() * 20 - 10; // 添加随机波动
+        const alipayProfit = dailyProfit * alipayRatio;
+        const bankProfit = dailyProfit * bankRatio;
+        
+        history.push({
+          date: date.toISOString().split('T')[0],
+          totalProfit: parseFloat(dailyProfit.toFixed(2)),
+          platformProfit: {
+            alipay: parseFloat(alipayProfit.toFixed(2)),
+            bank: parseFloat(bankProfit.toFixed(2))
+          }
+        });
+      }
+      
+      return history;
+    }
+
+    // 初始化数据
+    function initData() {
+      // 如果localStorage中没有数据，则初始化
+      if (!localStorage.getItem('financeProducts')) {
+        localStorage.setItem('financeProducts', JSON.stringify(mockData.products));
+      }
+      
+      if (!localStorage.getItem('profitHistory')) {
+        const history = generateProfitHistory();
+        localStorage.setItem('profitHistory', JSON.stringify(history));
+      }
+      
+      // 获取数据
+      mockData.products = JSON.parse(localStorage.getItem('financeProducts'));
+      mockData.profitHistory = JSON.parse(localStorage.getItem('profitHistory'));
+    }
+
+    // 更新产品数据
+    function updateProductData() {
+      const products = [...mockData.products];
+      
+      // 更新每个产品的收益和当前价值
+      products.forEach(product => {
+        // 根据产品类型和收益率计算日收益
+        let dailyProfitRate = product.profitRate / 365 / 100;
+        
+        // 添加一些随机波动
+        const fluctuation = (Math.random() * 0.4 - 0.2) * dailyProfitRate;
+        dailyProfitRate += fluctuation;
+        
+        // 计算日收益
+        const dailyProfit = product.amount * dailyProfitRate;
+        
+        // 更新产品数据
+        product.dailyProfit = parseFloat(dailyProfit.toFixed(2));
+        product.currentValue = parseFloat((product.currentValue + dailyProfit).toFixed(2));
+        product.totalProfit = parseFloat((product.currentValue - product.amount).toFixed(2));
+      });
+      
+      // 保存更新后的数据
+      mockData.products = products;
+      localStorage.setItem('financeProducts', JSON.stringify(products));
+      
+      // 更新收益历史
+      updateProfitHistory();
+    }
+
+    // 更新收益历史
+    function updateProfitHistory() {
+      const history = [...mockData.profitHistory];
+      const today = new Date().toISOString().split('T')[0];
+      
+      // 检查今天是否已有记录
+      const todayRecord = history.find(record => record.date === today);
+      
+      if (!todayRecord) {
+        // 计算今日总收益
+        let totalProfit = 0;
+        let alipayProfit = 0;
+        let bankProfit = 0;
+        
+        mockData.products.forEach(product => {
+          totalProfit += product.dailyProfit;
+          
+          if (product.platform === 'alipay') {
+            alipayProfit += product.dailyProfit;
+          } else {
+            bankProfit += product.dailyProfit;
+          }
+        });
+        
+        // 添加今日记录
+        history.push({
+          date: today,
+          totalProfit: parseFloat(totalProfit.toFixed(2)),
+          platformProfit: {
+            alipay: parseFloat(alipayProfit.toFixed(2)),
+            bank: parseFloat(bankProfit.toFixed(2))
+          }
+        });
+        
+        // 只保留最近30天的数据
+        if (history.length > 30) {
+          history.shift();
+        }
+        
+        // 保存更新后的数据
+        mockData.profitHistory = history;
+        localStorage.setItem('profitHistory', JSON.stringify(history));
+      }
+    }
+
+    // 渲染资产总览
+    function renderAssetOverview() {
+      // 计算总资产
+      const totalAssets = mockData.products.reduce((sum, product) => sum + product.currentValue, 0);
+      
+      // 计算总收益
+      const totalProfit = mockData.products.reduce((sum, product) => sum + product.totalProfit, 0);
+      
+      // 计算收益率
+      const totalAmount = mockData.products.reduce((sum, product) => sum + product.amount, 0);
+      const profitRate = (totalProfit / totalAmount) * 100;
+      
+      // 计算今日收益
+      const todayProfit = mockData.products.reduce((sum, product) => sum + product.dailyProfit, 0);
+      
+      // 获取昨日收益
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
+      const yesterdayRecord = mockData.profitHistory.find(record => record.date === yesterdayStr);
+      const yesterdayProfit = yesterdayRecord ? yesterdayRecord.totalProfit : 0;
+      
+      // 计算变化
+      const assetsChange = totalAssets - totalAmount;
+      const todayChange = todayProfit - yesterdayProfit;
+      
+      // 更新DOM
+      document.getElementById('totalAssets').textContent = totalAssets.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('totalProfit').textContent = totalProfit.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('profitRate').textContent = profitRate.toFixed(2) + '%';
+      document.getElementById('todayProfit').textContent = todayProfit.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      
+      // 更新变化
+      const assetsChangeEl = document.getElementById('assetsChange');
+      assetsChangeEl.innerHTML = `
+        <i class="fa fa-arrow-${assetsChange >= 0 ? 'up' : 'down'} mr-1"></i>
+        <span>${Math.abs(assetsChange).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+      `;
+      assetsChangeEl.className = assetsChange >= 0 ? 'ml-2 flex items-center text-success' : 'ml-2 flex items-center text-danger';
+      
+      const todayChangeEl = document.getElementById('todayChange');
+      todayChangeEl.innerHTML = `
+        <i class="fa fa-arrow-${todayChange >= 0 ? 'up' : 'down'} mr-1"></i>
+        <span>${Math.abs(todayChange).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+      `;
+      todayChangeEl.className = todayChange >= 0 ? 'ml-2 flex items-center text-success' : 'ml-2 flex items-center text-danger';
+    }
+
+    // 渲染收益统计
+    function renderProfitStatistics(period = 'week') {
+      // 获取时间范围
+      const today = new Date();
+      let startDate = new Date();
+      
+      switch (period) {
+        case 'week':
+          startDate.setDate(today.getDate() - 7);
+          break;
+        case 'month':
+          startDate.setMonth(today.getMonth() - 1);
+          break;
+        case 'year':
+          startDate.setFullYear(today.getFullYear() - 1);
+          break;
+      }
+      
+      const startDateStr = startDate.toISOString().split('T')[0];
+      
+      // 筛选时间范围内的收益记录
+      const periodRecords = mockData.profitHistory.filter(record => record.date >= startDateStr);
+      
+      // 计算总收益
+      const totalProfit = periodRecords.reduce((sum, record) => sum + record.totalProfit, 0);
+      
+      // 计算各平台收益
+      const alipayProfit = periodRecords.reduce((sum, record) => sum + record.platformProfit.alipay, 0);
+      const bankProfit = periodRecords.reduce((sum, record) => sum + record.platformProfit.bank, 0);
+      
+      // 计算占比
+      const alipayRatio = totalProfit > 0 ? (alipayProfit / totalProfit) * 100 : 0;
+      const bankRatio = totalProfit > 0 ? (bankProfit / totalProfit) * 100 : 0;
+      
+      // 更新DOM
+      document.getElementById('alipayProfit').textContent = alipayProfit.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('bankProfit').textContent = bankProfit.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('alipayProfitRatio').textContent = alipayRatio.toFixed(1) + '%';
+      document.getElementById('bankProfitRatio').textContent = bankRatio.toFixed(1) + '%';
+      
+      // 更新进度条
+      document.getElementById('alipayProfitBar').style.width = alipayRatio + '%';
+      document.getElementById('bankProfitBar').style.width = bankRatio + '%';
+    }
+
+    // 渲染产品卡片
+    function renderProductCard(product) {
+      const platformIcon = product.platform === 'alipay' 
+        ? 'https://p26-doubao-search-sign.byteimg.com/labis/131bb88b6ff9884b379617348f57c4f7~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1788084314&x-signature=R8aK0Ij12gtQ3wuP92VySKMQs%2BQ%3D'
+        : 'https://p3-doubao-search-sign.byteimg.com/labis/e65e9326441b6c0ad1a7f9bf2b4affb6~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1788084314&x-signature=%2FKtrodeM7ObL1wg%2Fp9YbIFitOwU%3D';
+      
+      const typeLabels = {
+        'money_fund': '货币基金',
+        'fixed_income': '固定收益',
+        'stock_fund': '股票基金',
+        'wealth_management': '理财产品'
+      };
+      
+      return `
+        <div class="product-card border border-gray-100 rounded-lg overflow-hidden hover:border-primary/30 hover:shadow-md transition-all cursor-pointer" data-product-id="${product.id}">
+          <div class="p-5">
+            <div class="flex justify-between items-start mb-4">
+              <div class="flex items-center">
+                <img src="${platformIcon}" alt="${product.platform}" class="w-6 h-6 mr-2">
+                <h3 class="font-medium text-gray-800">${product.name}</h3>
+              </div>
+              <span class="px-2 py-1 bg-blue-50 text-primary text-xs rounded-full">${typeLabels[product.type] || product.type}</span>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <p class="text-sm text-gray-500 mb-1">持有金额</p>
+                <p class="font-bold text-gray-800">${product.amount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} 元</p>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500 mb-1">当前价值</p>
+                <p class="font-bold text-primary">${product.currentValue.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} 元</p>
+              </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <p class="text-sm text-gray-500 mb-1">日收益</p>
+                <p class="font-bold ${product.dailyProfit >= 0 ? 'text-success' : 'text-danger'}">${product.dailyProfit >= 0 ? '+' : ''}${product.dailyProfit.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} 元</p>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500 mb-1">收益率</p>
+                <p class="font-bold ${product.profitRate >= 0 ? 'text-success' : 'text-danger'}">${product.profitRate >= 0 ? '+' : ''}${product.profitRate.toFixed(2)}%</p>
+              </div>
+            </div>
+          </div>
+          <div class="px-5 py-3 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
+            <span class="text-sm text-gray-500">${product.purchaseDate}</span>
+            <button class="view-details text-primary text-sm hover:underline">查看详情</button>
+          </div>
+        </div>
+      `;
+    }
+
+    // 渲染产品列表
+    function renderProductList(platform = 'all', searchTerm = '', sortBy = 'default') {
+      let filteredProducts = [...mockData.products];
+      
+      // 按平台筛选
+      if (platform !== 'all') {
+        filteredProducts = filteredProducts.filter(product => product.platform === platform);
+      }
+      
+      // 按名称搜索
+      if (searchTerm) {
+        filteredProducts = filteredProducts.filter(product => 
+          product.name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      }
+      
+      // 排序
+      switch (sortBy) {
+        case 'profit-desc':
+          filteredProducts.sort((a, b) => b.totalProfit - a.totalProfit);
+          break;
+        case 'profit-asc':
+          filteredProducts.sort((a, b) => a.totalProfit - b.totalProfit);
+          break;
+        case 'amount-desc':
+          filteredProducts.sort((a, b) => b.amount - a.amount);
+          break;
+        case 'amount-asc':
+          filteredProducts.sort((a, b) => a.amount - b.amount);
+          break;
+      }
+      
+      // 更新DOM
+      const productListEl = document.getElementById('productList');
+      
+      if (filteredProducts.length === 0) {
+        productListEl.innerHTML = `
+          <div class="col-span-1 md:col-span-2 lg:col-span-3 flex flex-col items-center justify-center py-12">
+            <i class="fa fa-search text-gray-300 text-5xl mb-4"></i>
+            <p class="text-gray-500">未找到匹配的产品</p>
+          </div>
+        `;
+        return;
+      }
+      
+      productListEl.innerHTML = filteredProducts.map(product => renderProductCard(product)).join('');
+      
+      // 添加点击事件
+      productListEl.querySelectorAll('.product-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const productId = card.dataset.productId;
+          showProductDetail(productId);
+        });
+      });
+    }
+
+    // 显示产品详情
+    function showProductDetail(productId) {
+      const product = mockData.products.find(p => p.id === productId);
+      
+      if (!product) return;
+      
+      const platformIcon = product.platform === 'alipay' 
+        ? 'https://p26-doubao-search-sign.byteimg.com/labis/131bb88b6ff9884b379617348f57c4f7~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1788084314&x-signature=R8aK0Ij12gtQ3wuP92VySKMQs%2BQ%3D'
+        : 'https://p3-doubao-search-sign.byteimg.com/labis/e65e9326441b6c0ad1a7f9bf2b4affb6~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1788084314&x-signature=%2FKtrodeM7ObL1wg%2Fp9YbIFitOwU%3D';
+      
+      const platformName = product.platform === 'alipay' ? '支付宝' : '银行';
+      
+      const typeLabels = {
+        'money_fund': '货币基金',
+        'fixed_income': '固定收益',
+        'stock_fund': '股票基金',
+        'wealth_management': '理财产品'
+      };
+      
+      // 计算预计年化收益
+      const annualProfit = product.amount * (product.profitRate / 100);
+      
+      // 生成详情内容
+      const detailContent = `
+        <div class="space-y-6">
+          <div class="flex items-center">
+            <img src="${platformIcon}" alt="${platformName}" class="w-8 h-8 mr-3">
+            <div>
+              <h3 class="text-xl font-bold text-gray-800">${product.name}</h3>
+              <p class="text-gray-500">${platformName} · ${typeLabels[product.type] || product.type}</p>
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-gray-50 rounded-lg p-4">
+              <p class="text-sm text-gray-500 mb-1">持有金额</p>
+              <p class="text-2xl font-bold text-gray-800">${product.amount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} 元</p>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-4">
+              <p class="text-sm text-gray-500 mb-1">当前价值</p>
+              <p class="text-2xl font-bold text-primary">${product.currentValue.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} 元</p>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-4">
+              <p class="text-sm text-gray-500 mb-1">总收益</p>
+              <p class="text-2xl font-bold text-success">${product.totalProfit.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} 元</p>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-4">
+              <p class="text-sm text-gray-500 mb-1">日收益</p>
+              <p class="text-2xl font-bold ${product.dailyProfit >= 0 ? 'text-success' : 'text-danger'}">${product.dailyProfit >= 0 ? '+' : ''}${product.dailyProfit.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} 元</p>
+            </div>
+          </div>
+          
+          <div class="border-t border-gray-100 pt-6">
+            <h4 class="font-medium text-gray-700 mb-4">收益信息</h4>
+            <div class="space-y-3">
+              <div class="flex justify-between">
+                <span class="text-gray-500">收益率</span>
+                <span class="font-medium">${product.profitRate.toFixed(2)}%</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500">预计年化收益</span>
+                <span class="font-medium">${annualProfit.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} 元</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500">购买日期</span>
+                <span class="font-medium">${product.purchaseDate}</span>
+              </div>
+              ${product.maturityDate ? `
+                <div class="flex justify-between">
+                  <span class="text-gray-500">到期日期</span>
+                  <span class="font-medium">${product.maturityDate}</span>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+          
+          <div class="border-t border-gray-100 pt-6">
+            <h4 class="font-medium text-gray-700 mb-4">产品说明</h4>
+            <p class="text-gray-600">${product.description || '暂无产品说明'}</p>
+          </div>
+        </div>
+      `;
+      
+      // 更新模态框内容
+      document.getElementById('modalProductName').textContent = product.name;
+      document.getElementById('modalProductContent').innerHTML = detailContent;
+      
+      // 显示模态框
+      document.getElementById('productDetailModal').classList.remove('hidden');
+    }
+
+    // 渲染收益趋势图表
+    let profitChart = null;
+    
+    function renderProfitChart(period = 'day') {
+      const ctx = document.getElementById('profitChart').getContext('2d');
+      
+      // 根据周期筛选数据
+      let chartData = [...mockData.profitHistory];
+      
+      if (period === 'week') {
+        chartData = chartData.slice(-7);
+      } else if (period === 'month') {
+        chartData = chartData.slice(-30);
+      }
+      
+      // 准备图表数据
+      const labels = chartData.map(record => {
+        const date = new Date(record.date);
+        if (period === 'day') {
+          return `${date.getMonth() + 1}/${date.getDate()}`;
+        } else if (period === 'week') {
+          const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+          return `周${weekdays[date.getDay()]}`;
+        } else {
+          return `${date.getMonth() + 1}月`;
+        }
+      });
+      
+      const totalProfitData = chartData.map(record => record.totalProfit);
+      const alipayProfitData = chartData.map(record => record.platformProfit.alipay);
+      const bankProfitData = chartData.map(record => record.platformProfit.bank);
+      
+      // 销毁旧图表
+      if (profitChart) {
+        profitChart.destroy();
+      }
+      
+      // 创建新图表
+      profitChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: '总收益',
+              data: totalProfitData,
+              borderColor: '#1e40af',
+              backgroundColor: 'rgba(30, 64, 175, 0.1)',
+              borderWidth: 2,
+              fill: true,
+              tension: 0.4
+            },
+            {
+              label: '支付宝收益',
+              data: alipayProfitData,
+              borderColor: '#3b82f6',
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              borderWidth: 2,
+              fill: true,
+              tension: 0.4
+            },
+            {
+              label: '银行收益',
+              data: bankProfitData,
+              borderColor: '#10b981',
+              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              borderWidth: 2,
+              fill: true,
+              tension: 0.4
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+            },
+            tooltip: {
+              mode: 'index',
+              intersect: false,
+              callbacks: {
+                label: function(context) {
+                  let label = context.dataset.label || '';
+                  if (label) {
+                    label += ': ';
+                  }
+                  if (context.parsed.y !== null) {
+                    label += context.parsed.y.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' 元';
+                  }
+                  return label;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: {
+                display: false
+              }
+            },
+            y: {
+              beginAtZero: true,
+              grid: {
+                color: 'rgba(0, 0, 0, 0.05)'
+              },
+              ticks: {
+                callback: function(value) {
+                  return value + ' 元';
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // 检查收益提醒
+    function checkProfitAlerts() {
+      const isAlertEnabled = document.getElementById('profitAlertToggle').checked;
+      
+      if (!isAlertEnabled) return;
+      
+      const dailyThreshold = parseFloat(document.getElementById('dailyAlertThreshold').value) || 0;
+      const weeklyThreshold = parseFloat(document.getElementById('weeklyAlertThreshold').value) || 0;
+      
+      // 获取今日收益
+      const today = new Date().toISOString().split('T')[0];
+      const todayRecord = mockData.profitHistory.find(record => record.date === today);
+      const todayProfit = todayRecord ? todayRecord.totalProfit : 0;
+      
+      // 获取本周收益
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      const weekAgoStr = weekAgo.toISOString().split('T')[0];
+      
+      const weekRecords = mockData.profitHistory.filter(record => record.date >= weekAgoStr);
+      const weeklyProfit = weekRecords.reduce((sum, record) => sum + record.totalProfit, 0);
+      
+      // 检查日收益提醒
+      if (todayProfit >= dailyThreshold) {
+        showNotification('日收益提醒', `您今日收益 ${todayProfit.toFixed(2)} 元，已超过设定阈值 ${dailyThreshold} 元`);
+      }
+      
+      // 检查周收益提醒
+      if (weeklyProfit >= weeklyThreshold) {
+        showNotification('周收益提醒', `您本周收益 ${weeklyProfit.toFixed(2)} 元，已超过设定阈值 ${weeklyThreshold} 元`);
+      }
+    }
+
+    // 显示通知
+    function showNotification(title, message) {
+      const notification = document.getElementById('notification');
+      const notificationTitle = document.getElementById('notificationTitle');
+      const notificationMessage = document.getElementById('notificationMessage');
+      
+      notificationTitle.textContent = title;
+      notificationMessage.textContent = message;
+      
+      notification.classList.remove('translate-x-full');
+      
+      // 5秒后自动关闭
+      setTimeout(() => {
+        notification.classList.add('translate-x-full');
+      }, 5000);
+    }
+
+    // 初始化应用
+    function initApp() {
+      // 初始化数据
+      initData();
+      
+      // 更新数据
+      updateProductData();
+      
+      // 渲染界面
+      renderAssetOverview();
+      renderProfitStatistics('week');
+      renderProductList('all', '', 'default');
+      renderProfitChart('day');
+      
+      // 绑定事件
+      bindEvents();
+      
+      // 检查收益提醒
+      checkProfitAlerts();
+    }
+
+    // 绑定事件
+    function bindEvents() {
+      // 刷新按钮
+      document.getElementById('refreshBtn').addEventListener('click', () => {
+        updateProductData();
+        renderAssetOverview();
+        renderProfitStatistics(document.querySelector('.profit-period-btn.bg-primary').dataset.period);
+        renderProductList(
+          document.querySelector('.platform-tab-btn.bg-primary').dataset.platform,
+          document.getElementById('productSearch').value,
+          document.getElementById('productSort').value
+        );
+        renderProfitChart(document.querySelector('.chart-period-btn.bg-primary').dataset.period);
+        
+        showNotification('数据更新', '理财数据已成功更新');
+      });
+      
+      // 收益统计周期切换
+      document.querySelectorAll('.profit-period-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.profit-period-btn').forEach(b => {
+            b.classList.remove('bg-primary', 'text-white');
+            b.classList.add('bg-gray-100', 'text-gray-600');
+          });
+          
+          btn.classList.remove('bg-gray-100', 'text-gray-600');
+          btn.classList.add('bg-primary', 'text-white');
+          
+          renderProfitStatistics(btn.dataset.period);
+        });
+      });
+      
+      // 平台标签切换
+      document.querySelectorAll('.platform-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.platform-tab-btn').forEach(b => {
+            b.classList.remove('bg-primary', 'text-white');
+            b.classList.add('bg-gray-100', 'text-gray-600');
+          });
+          
+          btn.classList.remove('bg-gray-100', 'text-gray-600');
+          btn.classList.add('bg-primary', 'text-white');
+          
+          renderProductList(
+            btn.dataset.platform,
+            document.getElementById('productSearch').value,
+            document.getElementById('productSort').value
+          );
+        });
+      });
+      
+      // 产品搜索
+      document.getElementById('productSearch').addEventListener('input', (e) => {
+        renderProductList(
+          document.querySelector('.platform-tab-btn.bg-primary').dataset.platform,
+          e.target.value,
+          document.getElementById('productSort').value
+        );
+      });
+      
+      // 产品排序
+      document.getElementById('productSort').addEventListener('change', (e) => {
+        renderProductList(
+          document.querySelector('.platform-tab-btn.bg-primary').dataset.platform,
+          document.getElementById('productSearch').value,
+          e.target.value
+        );
+      });
+      
+      // 图表周期切换
+      document.querySelectorAll('.chart-period-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.chart-period-btn').forEach(b => {
+            b.classList.remove('bg-primary', 'text-white');
+            b.classList.add('bg-gray-100', 'text-gray-600');
+          });
+          
+          btn.classList.remove('bg-gray-100', 'text-gray-600');
+          btn.classList.add('bg-primary', 'text-white');
+          
+          renderProfitChart(btn.dataset.period);
+        });
+      });
+      
+      // 收益提醒开关
+      document.getElementById('profitAlertToggle').addEventListener('change', (e) => {
+        const alertSettings = document.getElementById('alertSettings');
+        
+        if (e.target.checked) {
+          alertSettings.classList.remove('opacity-50', 'pointer-events-none');
+        } else {
+          alertSettings.classList.add('opacity-50', 'pointer-events-none');
+        }
+      });
+      
+      // 关闭产品详情模态框
+      document.getElementById('closeProductModal').addEventListener('click', () => {
+        document.getElementById('productDetailModal').classList.add('hidden');
+      });
+      
+      // 点击模态框背景关闭
+      document.getElementById('productDetailModal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('productDetailModal')) {
+          document.getElementById('productDetailModal').classList.add('hidden');
+        }
+      });
+      
+      // 关闭通知
+      document.getElementById('closeNotification').addEventListener('click', () => {
+        document.getElementById('notification').classList.add('translate-x-full');
+      });
+      
+      // 设置按钮
+      document.getElementById('settingsBtn').addEventListener('click', () => {
+        showNotification('设置', '设置功能正在开发中，敬请期待！');
+      });
+    }
+
+    // 页面加载完成后初始化应用
+    document.addEventListener('DOMContentLoaded', initApp);
+  </script>
+</body>
+</html>
