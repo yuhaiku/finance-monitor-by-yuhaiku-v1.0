@@ -2,8 +2,21 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>理财监控中心</title>
+  
+  <!-- PWA 相关配置 -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1e40af">
+  <meta name="description" content="统一管理支付宝和银行理财产品收益">
+  
+  <!-- iOS PWA 相关配置 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="理财监控">
+  <link rel="apple-touch-icon" href="https://p3-doubao-search-sign.byteimg.com/labis/3aab5e9ec2eb8ffa147512ff0183eedf~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1788084314&x-signature=GbXHYoKcrZfM%2BQ0jIWR0AeNgOxg%3D">
+  <link rel="apple-touch-startup-image" href="https://p26-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/c5f09b400b5d46d59c4d62139390faf7~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202603031804374B4DDF4DC7609ADA203D&rrcfp=f06b921b&x-expires=1775124334&x-signature=Co3oVMsegE5pos3%2BnVAKcHorwDw%3D">
+  
   <!-- Tailwind CSS v3 -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Font Awesome -->
@@ -329,7 +342,71 @@
     </div>
   </div>
 
+  <!-- PWA Service Worker 注册 -->
   <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then((registration) => {
+            console.log('Service Worker 注册成功:', registration.scope);
+            
+            // 注册后台同步
+            if ('sync' in registration) {
+              navigator.serviceWorker.ready.then((reg) => {
+                reg.sync.register('refresh-finance-data');
+              });
+            }
+            
+            // 请求通知权限
+            if ('Notification' in window) {
+              Notification.requestPermission().then((permission) => {
+                if (permission === 'granted') {
+                  console.log('通知权限已获取');
+                }
+              });
+            }
+          })
+          .catch((error) => {
+            console.log('Service Worker 注册失败:', error);
+          });
+      });
+    }
+    
+    // 检测是否从主屏幕启动
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      console.log('应用从主屏幕启动');
+      // 可以在这里添加特定的逻辑
+    }
+    
+    // 处理URL参数
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('action')) {
+      const action = urlParams.get('action');
+      if (action === 'refresh') {
+        // 页面加载完成后自动刷新数据
+        window.addEventListener('load', () => {
+          setTimeout(() => {
+            document.getElementById('refreshBtn').click();
+          }, 500);
+        });
+      }
+    }
+    
+    if (urlParams.has('view')) {
+      const view = urlParams.get('view');
+      if (view === 'chart') {
+        // 滚动到图表区域
+        window.addEventListener('load', () => {
+          setTimeout(() => {
+            const chartSection = document.querySelector('section:nth-child(4)');
+            if (chartSection) {
+              chartSection.scrollIntoView({ behavior: 'smooth' });
+            }
+          }, 500);
+        });
+      }
+    }
+    
     // 模拟数据
     const mockData = {
       products: [
