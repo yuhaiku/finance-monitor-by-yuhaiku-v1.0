@@ -1,0 +1,49 @@
+{
+  "name": "理财监控中心",
+  "short_name": "理财监控",
+  "description": "统一管理支付宝和银行理财产品收益",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#1e40af",
+  "icons": [
+    {
+      "src": "https://p3-doubao-search-sign.byteimg.com/labis/3aab5e9ec2eb8ffa147512ff0183eedf~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1788084314&x-signature=GbXHYoKcrZfM%2BQ0jIWR0AeNgOxg%3D",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://p3-doubao-search-sign.byteimg.com/labis/3aab5e9ec2eb8ffa147512ff0183eedf~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1788084314&x-signature=GbXHYoKcrZfM%2BQ0jIWR0AeNgOxg%3D",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "https://p26-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/c5f09b400b5d46d59c4d62139390faf7~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202603031804374B4DDF4DC7609ADA203D&rrcfp=f06b921b&x-expires=1775124334&x-signature=Co3oVMsegE5pos3%2BnVAKcHorwDw%3D",
+      "sizes": "1024x1024",
+      "type": "image/jpeg"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "刷新数据",
+      "short_name": "刷新",
+      "description": "更新理财产品数据",
+      "url": "/?action=refresh",
+      "icons": [{ "src": "https://p3-doubao-search-sign.byteimg.com/labis/3aab5e9ec2eb8ffa147512ff0183eedf~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1788084314&x-signature=GbXHYoKcrZfM%2BQ0jIWR0AeNgOxg%3D", "sizes": "96x96" }]
+    },
+    {
+      "name": "收益趋势",
+      "short_name": "趋势",
+      "description": "查看收益趋势图表",
+      "url": "/?view=chart",
+      "icons": [{ "src": "https://p3-doubao-search-sign.byteimg.com/labis/3aab5e9ec2eb8ffa147512ff0183eedf~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1788084314&x-signature=GbXHYoKcrZfM%2BQ0jIWR0AeNgOxg%3D", "sizes": "96x96" }]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}
